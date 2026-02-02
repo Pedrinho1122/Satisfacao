@@ -556,7 +556,17 @@
                 content.innerHTML = '<div class="loading">Carregando histórico...</div>';
 
                 const response = await fetch(`/api/admin/historico?page=${page}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
                 const data = await response.json();
+                
+                if (!data || !data.historico) {
+                    content.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">Sem dados disponíveis</p>';
+                    return;
+                }
 
                 if (data.historico.length === 0) {
                     content.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">Sem dados disponíveis</p>';
