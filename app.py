@@ -1,9 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import sqlite3
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import os
+from functools import wraps
 
 app = Flask(__name__)
+app.secret_key = 'satisfacao_admin_secret_2026'
 
 # Usar SQLite localmente ou PostgreSQL no cloud
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -66,7 +68,7 @@ def get_db():
     return conn
 
 def get_sequential_number(tipo):
-    """Obter número sequencial da avaliação para hoje"""
+    """Obter número sequencial global para hoje (não por tipo)"""
     today = date.today().isoformat()
     conn = get_db()
     
@@ -75,8 +77,8 @@ def get_sequential_number(tipo):
         cursor.execute('''
             SELECT MAX(sequential_number) as max_seq 
             FROM avaliacoes 
-            WHERE tipo = ? AND avaliacao_date = ?
-        ''', (tipo, today))
+            WHERE avaliacao_date = ?
+        ''', (today,))
         result = cursor.fetchone()
         max_seq = result['max_seq'] if result['max_seq'] else 0
     else:
@@ -84,8 +86,8 @@ def get_sequential_number(tipo):
         cursor.execute('''
             SELECT MAX(sequential_number) as max_seq 
             FROM avaliacoes 
-            WHERE tipo = %s AND avaliacao_date = %s
-        ''', (tipo, today))
+            WHERE avaliacao_date = %s
+        ''', (today,))
         result = cursor.fetchone()
         max_seq = result[0] if result[0] else 0
     
@@ -218,7 +220,7 @@ def get_stats():
 
 @app.route('/api/export', methods=['GET'])
 def export_data():
-    """Exportar dados para CSV (todas as datas)"""
+    """Exportar dados para CSV/Excel (todas as datas)"""
     try:
         conn = get_db()
         cursor = conn.cursor()
@@ -227,7 +229,7 @@ def export_data():
             cursor.execute('''
                 SELECT tipo, avaliacao_date, avaliacao_time, sequential_number
                 FROM avaliacoes
-                ORDER BY id DESC
+                ORDER BY avaliacao_date DESC, avaliacao_time DESC
             ''')
             avaliacoes = cursor.fetchall()
             data = [dict(row) for row in avaliacoes]
@@ -235,22 +237,28 @@ def export_data():
             cursor.execute('''
                 SELECT tipo, avaliacao_date, avaliacao_time, sequential_number
                 FROM avaliacoes
-                ORDER BY id DESC
+                ORDER BY avaliacao_date DESC, avaliacao_time DESC
             ''')
             avaliacoes = cursor.fetchall()
             data = [{'tipo': row[0], 'avaliacao_date': row[1], 'avaliacao_time': row[2], 'sequential_number': row[3]} for row in avaliacoes]
         
         conn.close()
         
-        # Criar CSV
-        from io import StringIO
+        # Criar CSV com ponto e virgula (formato Excel europeu)
+        from io import StringIO, BytesIO
         import csv
         
-        si = StringIO()
-        writer = csv.writer(si)
+        # Usar BytesIO para adicionar BOM UTF-8
+        output = BytesIO()
+        # BOM UTF-8 para o Excel reconhecer encoding
+        output.write(b'\xef\xbb\xbf')
         
-        # Cabeçalho
-        writer.writerow(['Tipo', 'Avaliação', 'Data', 'Hora', 'Número'])
+        si = StringIO()
+        # Usar ponto e virgula como delimitador (padrao Excel Europa)
+        writer = csv.writer(si, delimiter=';', lineterminator='\n')
+        
+        # Cabecalho
+        writer.writerow(['Tipo', 'Avaliacao', 'Data', 'Hora', 'Numero'])
         
         # Dados
         tipos_nome = {1: 'Muito Satisfeito', 2: 'Satisfeito', 3: 'Insatisfeito'}
@@ -263,13 +271,213 @@ def export_data():
                 row['sequential_number']
             ])
         
-        output = si.getvalue()
+        # Adicionar conteudo CSV ao output
+        output.write(si.getvalue().encode('utf-8'))
         
         from flask import make_response
-        response = make_response(output)
+        response = make_response(output.getvalue())
         response.headers["Content-Disposition"] = "attachment; filename=avaliacoes_todas.csv"
-        response.headers["Content-type"] = "text/csv"
+        response.headers["Content-type"] = "text/csv; charset=utf-8"
         return response
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def login_required(f):
+    """Decorator para verificar se o utilizador está autenticado"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Página de login"""
+    if request.method == 'POST':
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        
+        # Credenciais hardcoded
+        if username == 'pedro' and password == '1234':
+            session['user'] = username
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Credenciais inválidas'}), 401
+    
+    return render_template('login.html')
+
+@app.route('/admin')
+@login_required
+def admin():
+    """Página de administração"""
+    return render_template('admin.html')
+
+@app.route('/logout')
+def logout():
+    """Fazer logout"""
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/api/admin/stats-temporal', methods=['GET'])
+@login_required
+def get_stats_temporal():
+    """Obter estatísticas temporais (últimos 30 dias)"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        today = date.today()
+        start_date = (today - timedelta(days=29)).isoformat()
+        end_date = today.isoformat()
+        
+        if DB_TYPE == 'sqlite':
+            cursor.execute('''
+                SELECT avaliacao_date, tipo, MAX(sequential_number) as total
+                FROM avaliacoes
+                WHERE avaliacao_date BETWEEN ? AND ?
+                GROUP BY avaliacao_date, tipo
+                ORDER BY avaliacao_date DESC
+            ''', (start_date, end_date))
+            rows = cursor.fetchall()
+            result = [dict(row) for row in rows]
+        else:
+            cursor.execute('''
+                SELECT avaliacao_date, tipo, MAX(sequential_number) as total
+                FROM avaliacoes
+                WHERE avaliacao_date BETWEEN %s AND %s
+                GROUP BY avaliacao_date, tipo
+                ORDER BY avaliacao_date DESC
+            ''', (start_date, end_date))
+            rows = cursor.fetchall()
+            result = [{'avaliacao_date': row[0], 'tipo': row[1], 'total': row[2]} for row in rows]
+        
+        conn.close()
+        return jsonify(result)
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/historico', methods=['GET'])
+@login_required
+def get_historico():
+    """Obter histórico completo de avaliações"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 50
+        offset = (page - 1) * per_page
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        if DB_TYPE == 'sqlite':
+            cursor.execute('''
+                SELECT tipo, avaliacao_date, avaliacao_time, sequential_number
+                FROM avaliacoes
+                ORDER BY avaliacao_date DESC, avaliacao_time DESC
+                LIMIT ? OFFSET ?
+            ''', (per_page, offset))
+            rows = cursor.fetchall()
+            data = [dict(row) for row in rows]
+            
+            cursor.execute('SELECT COUNT(*) as total FROM avaliacoes')
+            total = cursor.fetchone()['total']
+        else:
+            cursor.execute('''
+                SELECT tipo, avaliacao_date, avaliacao_time, sequential_number
+                FROM avaliacoes
+                ORDER BY avaliacao_date DESC, avaliacao_time DESC
+                LIMIT %s OFFSET %s
+            ''', (per_page, offset))
+            rows = cursor.fetchall()
+            data = [{'tipo': row[0], 'avaliacao_date': row[1], 'avaliacao_time': row[2], 'sequential_number': row[3]} for row in rows]
+            
+            cursor.execute('SELECT COUNT(*) as total FROM avaliacoes')
+            total = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return jsonify({
+            'historico': data,
+            'total': total,
+            'page': page,
+            'pages': (total + per_page - 1) // per_page
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/resumo-geral', methods=['GET'])
+@login_required
+def get_resumo_geral():
+    """Obter resumo geral de estatísticas"""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        if DB_TYPE == 'sqlite':
+            # Total de avaliações
+            cursor.execute('SELECT COUNT(*) as total FROM avaliacoes')
+            total = cursor.fetchone()['total']
+            
+            # Total por tipo (último valor de sequential_number para cada tipo)
+            cursor.execute('''
+                SELECT tipo, MAX(sequential_number) as total
+                FROM avaliacoes
+                GROUP BY tipo
+            ''')
+            stats = cursor.fetchall()
+            result_stats = {1: 0, 2: 0, 3: 0}
+            for row in stats:
+                result_stats[row['tipo']] = row['total']
+            
+            # Dados de hoje
+            today = date.today().isoformat()
+            cursor.execute('''
+                SELECT tipo, MAX(sequential_number) as total
+                FROM avaliacoes
+                WHERE avaliacao_date = ?
+                GROUP BY tipo
+            ''', (today,))
+            today_stats = cursor.fetchall()
+            today_result = {1: 0, 2: 0, 3: 0}
+            for row in today_stats:
+                today_result[row['tipo']] = row['total']
+        else:
+            cursor.execute('SELECT COUNT(*) as total FROM avaliacoes')
+            total = cursor.fetchone()[0]
+            
+            cursor.execute('''
+                SELECT tipo, MAX(sequential_number) as total
+                FROM avaliacoes
+                GROUP BY tipo
+            ''')
+            stats = cursor.fetchall()
+            result_stats = {1: 0, 2: 0, 3: 0}
+            for row in stats:
+                result_stats[row[0]] = row[1]
+            
+            today = date.today().isoformat()
+            cursor.execute('''
+                SELECT tipo, MAX(sequential_number) as total
+                FROM avaliacoes
+                WHERE avaliacao_date = %s
+                GROUP BY tipo
+            ''', (today,))
+            today_stats = cursor.fetchall()
+            today_result = {1: 0, 2: 0, 3: 0}
+            for row in today_stats:
+                today_result[row[0]] = row[1]
+        
+        conn.close()
+        
+        return jsonify({
+            'total_geral': total,
+            'stats_geral': result_stats,
+            'stats_hoje': today_result
+        })
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -277,4 +485,4 @@ def export_data():
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(debug=True, host='0.0.0.0', port=port, use_reloader=False)

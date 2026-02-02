@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Administração</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header a {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .header a:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            color: #999;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-emoji {
+            font-size: 32px;
+            margin-right: 10px;
+        }
+
+        .stat-subtext {
+            font-size: 12px;
+            color: #bbb;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-card h3 {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .historico-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .historico-section h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .historico-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .historico-table thead {
+            background-color: #f0f2f5;
+        }
+
+        .historico-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .historico-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 14px;
+        }
+
+        .historico-table tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .tipo-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 130px;
+            text-align: center;
+        }
+
+        .tipo-1 {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .tipo-2 {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .tipo-3 {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .pagination button:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .pagination button.active {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .header div {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .back-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .back-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Painel de Administração</h1>
+        <div>
+            <a href="/" class="back-button">← Voltar</a>
+            <a href="/logout">Sair 🚪</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Estatísticas Resumidas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">📌 Total Geral</div>
+                <div class="stat-value" id="totalGeral">-</div>
+                <div class="stat-subtext">Todas as avaliações</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">😀 Muito Satisfeito</div>
+                <div class="stat-value" id="statTipo1">-</div>
+                <div class="stat-subtext">Avaliações positivas</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">🙂 Satisfeito</div>
+                <div class="stat-value" id="statTipo2">-</div>
+                <div class="stat-subtext">Avaliações neutras</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">😞 Insatisfeito</div>
+                <div class="stat-value" id="statTipo3">-</div>
+                <div class="stat-subtext">Avaliações negativas</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">📅 Hoje</div>
+                <div class="stat-value" id="totalHoje">-</div>
+                <div class="stat-subtext">Avaliações de hoje</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">📈 Taxa Satisfação</div>
+                <div class="stat-value" id="taxaSatisfacao">-</div>
+                <div class="stat-subtext">Muito Satisfeito + Satisfeito</div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <h3>📊 Distribuição Geral</h3>
+                <div class="chart-container">
+                    <canvas id="chartGeral"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>📊 Distribuição Hoje</h3>
+                <div class="chart-container">
+                    <canvas id="chartHoje"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análise Temporal -->
+        <div class="historico-section">
+            <h2>📈 Análise Temporal (Últimos 30 Dias)</h2>
+            <div id="temporalContent" class="loading">Carregando...</div>
+        </div>
+
+        <!-- Histórico -->
+        <div class="historico-section" style="margin-top: 30px;">
+            <h2>📋 Histórico Completo</h2>
+            <div id="historicoContent" class="loading">Carregando...</div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let charts = {};
+
+        // Carregar dados ao abrir
+        document.addEventListener('DOMContentLoaded', () => {
+            loadResumoGeral();
+            loadStatsHoje();
+            loadTemporal();
+            loadHistorico(1);
+            setInterval(loadResumoGeral, 30000); // Atualizar a cada 30s
+        });
+
+        async function loadResumoGeral() {
+            try {
+                const response = await fetch('/api/admin/resumo-geral');
+                const data = await response.json();
+
+                document.getElementById('totalGeral').textContent = data.total_geral;
+                document.getElementById('statTipo1').textContent = data.stats_geral[1];
+                document.getElementById('statTipo2').textContent = data.stats_geral[2];
+                document.getElementById('statTipo3').textContent = data.stats_geral[3];
+                document.getElementById('totalHoje').textContent = 
+                    (data.stats_hoje[1] || 0) + (data.stats_hoje[2] || 0) + (data.stats_hoje[3] || 0);
+
+                // Taxa de satisfação
+                const satisfeitos = (data.stats_geral[1] || 0) + (data.stats_geral[2] || 0);
+                const total = data.total_geral || 1;
+                const taxa = Math.round((satisfeitos / total) * 100);
+                document.getElementById('taxaSatisfacao').textContent = taxa + '%';
+
+                updateChartsGeral(data.stats_geral);
+                updateChartsHoje(data.stats_hoje);
+            } catch (error) {
+                console.error('Erro ao carregar resumo geral:', error);
+            }
+        }
+
+        function updateChartsGeral(stats) {
+            const ctx = document.getElementById('chartGeral');
+            if (!ctx) return;
+
+            if (charts.geral) {
+                charts.geral.data.datasets[0].data = [stats[1] || 0, stats[2] || 0, stats[3] || 0];
+                charts.geral.update();
+            } else {
+                charts.geral = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['😀 Muito Satisfeito', '🙂 Satisfeito', '😞 Insatisfeito'],
+                        datasets: [{
+                            data: [stats[1] || 0, stats[2] || 0, stats[3] || 0],
+                            backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                            borderColor: ['white', 'white', 'white'],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 13 }, padding: 15 }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateChartsHoje(stats) {
+            const ctx = document.getElementById('chartHoje');
+            if (!ctx) return;
+
+            if (charts.hoje) {
+                charts.hoje.data.datasets[0].data = [stats[1] || 0, stats[2] || 0, stats[3] || 0];
+                charts.hoje.update();
+            } else {
+                charts.hoje = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['😀 Muito Satisfeito', '🙂 Satisfeito', '😞 Insatisfeito'],
+                        datasets: [{
+                            label: 'Avaliações',
+                            data: [stats[1] || 0, stats[2] || 0, stats[3] || 0],
+                            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+
+        async function loadStatsHoje() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                updateChartsHoje(data);
+            } catch (error) {
+                console.error('Erro ao carregar stats de hoje:', error);
+            }
+        }
+
+        async function loadTemporal() {
+            try {
+                const content = document.getElementById('temporalContent');
+                content.innerHTML = '<div class="loading">Carregando dados temporais...</div>';
+
+                const response = await fetch('/api/admin/stats-temporal');
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    content.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">Sem dados disponíveis</p>';
+                    return;
+                }
+
+                // Agrupar por data
+                const byDate = {};
+                data.forEach(item => {
+                    if (!byDate[item.avaliacao_date]) {
+                        byDate[item.avaliacao_date] = { 1: 0, 2: 0, 3: 0 };
+                    }
+                    byDate[item.avaliacao_date][item.tipo] = item.total;
+                });
+
+                let html = '<table class="historico-table"><thead><tr>';
+                html += '<th>Data</th><th>😀 Muito Satisfeito</th><th>🙂 Satisfeito</th><th>😞 Insatisfeito</th><th>Total</th>';
+                html += '</tr></thead><tbody>';
+
+                const dates = Object.keys(byDate).sort().reverse();
+                dates.forEach(date => {
+                    const stats = byDate[date];
+                    const total = (stats[1] || 0) + (stats[2] || 0) + (stats[3] || 0);
+                    html += `<tr>
+                        <td><strong>${date}</strong></td>
+                        <td style="text-align: center;">${stats[1] || 0}</td>
+                        <td style="text-align: center;">${stats[2] || 0}</td>
+                        <td style="text-align: center;">${stats[3] || 0}</td>
+                        <td style="text-align: center; font-weight: bold;">${total}</td>
+                    </tr>`;
+                });
+
+                html += '</tbody></table>';
+                content.innerHTML = html;
+            } catch (error) {
+                console.error('Erro ao carregar dados temporais:', error);
+                document.getElementById('temporalContent').innerHTML = '<p style="color: red;">Erro ao carregar</p>';
+            }
+        }
+
+        async function loadHistorico(page) {
+            try {
+                const content = document.getElementById('historicoContent');
+                content.innerHTML = '<div class="loading">Carregando histórico...</div>';
+
+                const response = await fetch(`/api/admin/historico?page=${page}`);
+                const data = await response.json();
+
+                if (data.historico.length === 0) {
+                    content.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">Sem dados disponíveis</p>';
+                    return;
+                }
+
+                const tipos = { 1: '😀 Muito Satisfeito', 2: '🙂 Satisfeito', 3: '😞 Insatisfeito' };
+                let html = '<table class="historico-table"><thead><tr>';
+                html += '<th>Data</th><th>Hora</th><th>Tipo</th><th>Número</th>';
+                html += '</tr></thead><tbody>';
+
+                data.historico.forEach(item => {
+                    html += `<tr>
+                        <td>${item.avaliacao_date}</td>
+                        <td>${item.avaliacao_time}</td>
+                        <td><span class="tipo-badge tipo-${item.tipo}">${tipos[item.tipo]}</span></td>
+                        <td style="text-align: center;">#${item.sequential_number}</td>
+                    </tr>`;
+                });
+
+                html += '</tbody></table>';
+                content.innerHTML = html;
+
+                // Atualizar paginação
+                updatePagination(data.page, data.pages);
+                currentPage = page;
+            } catch (error) {
+                console.error('Erro ao carregar histórico:', error);
+                document.getElementById('historicoContent').innerHTML = '<p style="color: red;">Erro ao carregar</p>';
+            }
+        }
+
+        function updatePagination(current, total) {
+            const container = document.getElementById('pagination');
+            let html = '';
+
+            if (current > 1) {
+                html += `<button onclick="loadHistorico(${current - 1})">← Anterior</button>`;
+            }
+
+            for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) {
+                const activeClass = i === current ? 'active' : '';
+                html += `<button class="${activeClass}" onclick="loadHistorico(${i})">${i}</button>`;
+            }
+
+            if (current < total) {
+                html += `<button onclick="loadHistorico(${current + 1})">Próxima →</button>`;
+            }
+
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
