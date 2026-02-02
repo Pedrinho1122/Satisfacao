@@ -1,0 +1,232 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.buttons-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.satisfaction-button {
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 25px;
+    padding: 40px;
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.satisfaction-button:hover {
+    filter: brightness(0.95);
+}
+
+.satisfaction-button:active {
+    transform: scale(0.98);
+}
+
+/* Cores para cada tipo */
+.very-satisfied {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+}
+
+.very-satisfied:hover {
+    background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+}
+
+.satisfied {
+    background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+    color: white;
+}
+
+.satisfied:hover {
+    background: linear-gradient(135deg, #0b7dda 0%, #0a66c2 100%);
+}
+
+.unsatisfied {
+    background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+    color: white;
+}
+
+.unsatisfied:hover {
+    background: linear-gradient(135deg, #da190b 0%, #ba0000 100%);
+}
+
+.emoji {
+    font-size: 6em;
+    line-height: 1;
+}
+
+.button-label {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.counter {
+    font-size: 3em;
+    font-weight: bold;
+    display: inline-block;
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Pop-up */
+.info-popup {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    padding: 20px 30px;
+    max-width: 350px;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.info-popup.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.popup-header {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+.popup-info p {
+    margin: 8px 0;
+    font-size: 0.95em;
+    color: #333;
+}
+
+.popup-info strong {
+    color: #764ba2;
+}
+
+/* Link Dashboard */
+.dashboard-link {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+}
+
+.dashboard-link a {
+    display: inline-block;
+    background: white;
+    color: #667eea;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.dashboard-link a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Animação pulse */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 0.4s ease-in-out;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .emoji {
+        font-size: 4em;
+    }
+
+    .button-label {
+        font-size: 1.5em;
+    }
+
+    .counter {
+        font-size: 2em;
+    }
+
+    .dashboard-link {
+        top: 10px;
+        right: 10px;
+    }
+
+    .dashboard-link a {
+        padding: 10px 16px;
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    .buttons-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(3, 1fr);
+    }
+
+    .emoji {
+        font-size: 3em;
+    }
+
+    .button-label {
+        font-size: 1.2em;
+    }
+
+    .counter {
+        font-size: 1.5em;
+    }
+
+    .info-popup {
+        bottom: 15px;
+        right: 15px;
+        left: 15px;
+        max-width: none;
+    }
+}

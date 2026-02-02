@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação de Satisfação</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="buttons-grid">
+            <button class="satisfaction-button very-satisfied" data-tipo="1">
+                <span class="emoji">😀</span>
+                <span class="button-label">Muito Satisfeito</span>
+                <span class="counter" id="count-1">0</span>
+            </button>
+            <button class="satisfaction-button satisfied" data-tipo="2">
+                <span class="emoji">🙂</span>
+                <span class="button-label">Satisfeito</span>
+                <span class="counter" id="count-2">0</span>
+            </button>
+            <button class="satisfaction-button unsatisfied" data-tipo="3">
+                <span class="emoji">😞</span>
+                <span class="button-label">Insatisfeito</span>
+                <span class="counter" id="count-3">0</span>
+            </button>
+        </div>
+
+        <div id="info-popup" class="info-popup">
+            <div class="popup-content">
+                <div class="popup-header">Avaliação Registada!</div>
+                <div class="popup-info">
+                    <p><strong>Tipo:</strong> <span id="popup-tipo">-</span></p>
+                    <p><strong>Número:</strong> <span id="popup-number">-</span></p>
+                    <p><strong>Hora:</strong> <span id="popup-time">-</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-link">
+            <a href="/dashboard">📊 Ver Dashboard</a>
+            <a href="/login">🔐 Administração</a>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
