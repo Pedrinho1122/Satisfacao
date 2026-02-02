@@ -366,6 +366,8 @@ def get_historico():
     """Obter histórico completo de avaliações"""
     try:
         page = request.args.get('page', 1, type=int)
+        if page < 1:
+            page = 1
         per_page = 50
         offset = (page - 1) * per_page
         
@@ -383,7 +385,8 @@ def get_historico():
             data = [dict(row) for row in rows]
             
             cursor.execute('SELECT COUNT(*) as total FROM avaliacoes')
-            total = cursor.fetchone()['total']
+            result = cursor.fetchone()
+            total = result['total'] if result and result['total'] else 0
         else:
             cursor.execute('''
                 SELECT tipo, avaliacao_date, avaliacao_time, sequential_number
@@ -394,20 +397,26 @@ def get_historico():
             rows = cursor.fetchall()
             data = [{'tipo': row[0], 'avaliacao_date': row[1], 'avaliacao_time': row[2], 'sequential_number': row[3]} for row in rows]
             
-            cursor.execute('SELECT COUNT(*) as total FROM avaliacoes')
-            total = cursor.fetchone()[0]
+            cursor.execute('SELECT COUNT(*) FROM avaliacoes')
+            result = cursor.fetchone()
+            total = result[0] if result and result[0] else 0
         
         conn.close()
+        
+        # Calcular pages corretamente
+        pages = (total + per_page - 1) // per_page if total > 0 else 1
         
         return jsonify({
             'historico': data,
             'total': total,
             'page': page,
-            'pages': (total + per_page - 1) // per_page
+            'pages': pages
         })
     
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Erro: {str(e)}'}), 500
 
 @app.route('/api/admin/resumo-geral', methods=['GET'])
 @login_required
