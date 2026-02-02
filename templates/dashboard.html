@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Avaliações</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1>📊 Dashboard de Avaliações</h1>
+            <div class="nav">
+                <a href="/" class="back-button">← Voltar</a>
+                <div class="header-actions">
+                    <a href="/api/export" class="export-button" download>📥 Exportar Excel (Tudo)</a>
+                    <div id="current-date"></div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="stats-grid">
+                <div class="stat-card very-satisfied-card">
+                    <div class="stat-icon">😀</div>
+                    <div class="stat-label">Muito Satisfeito</div>
+                    <div class="stat-number" id="stat-1">0</div>
+                </div>
+                <div class="stat-card satisfied-card">
+                    <div class="stat-icon">🙂</div>
+                    <div class="stat-label">Satisfeito</div>
+                    <div class="stat-number" id="stat-2">0</div>
+                </div>
+                <div class="stat-card unsatisfied-card">
+                    <div class="stat-icon">😞</div>
+                    <div class="stat-label">Insatisfeito</div>
+                    <div class="stat-number" id="stat-3">0</div>
+                </div>
+                <div class="stat-card total-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-label">Total</div>
+                    <div class="stat-number" id="stat-total">0</div>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <h2>Distribuição de Avaliações</h2>
+                <div class="chart-container">
+                    <div class="bar-chart">
+                        <div class="bar very-satisfied-bar" id="bar-1">
+                            <div class="bar-fill" id="bar-fill-1"></div>
+                            <span class="bar-label">0%</span>
+                        </div>
+                        <div class="bar satisfied-bar" id="bar-2">
+                            <div class="bar-fill" id="bar-fill-2"></div>
+                            <span class="bar-label">0%</span>
+                        </div>
+                        <div class="bar unsatisfied-bar" id="bar-3">
+                            <div class="bar-fill" id="bar-fill-3"></div>
+                            <span class="bar-label">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="history-section">
+                <h2>Histórico de Hoje</h2>
+                <div id="history-list" class="history-list">
+                    <p class="empty-message">Nenhuma avaliação registada hoje</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

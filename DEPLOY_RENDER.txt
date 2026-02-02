@@ -1,0 +1,55 @@
+# Guia Deploy no Render (5 minutos)
+
+## Passo 1: Preparar GitHub
+1. Vá a https://github.com/Pedrinho1122
+2. Clique "New repository"
+3. Nome: `Satisfacao`
+4. Descrição: `Sistema de Avaliação de Satisfação`
+5. Public
+6. Create repository
+
+## Passo 2: Upload Ficheiros
+1. No repositório criado, clique "uploading an existing file"
+2. Arraste TODOS os ficheiros de `C:\Users\ESRP\Desktop\Satisfacao`
+3. **EXCETO:** .venv e *.db
+4. Commit changes
+
+## Passo 3: Deploy no Render
+1. Aceda a https://render.com
+2. Clique "Sign Up" (ou login com GitHub)
+3. Após login, clique "New +" → "Web Service"
+4. Clique "Connect GitHub" (autorizar)
+5. Selecione o repositório `Satisfacao`
+6. Configurações:
+   - **Name:** `satisfacao` (ou outro nome)
+   - **Environment:** Python 3
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn app:app`
+   - **Plan:** Free
+7. Clique "Create Web Service"
+
+## Passo 4: Aguardar Deploy
+- Render vai instalar dependências (2-3 minutos)
+- Quando aparecer "Live" → PRONTO!
+- URL pública: `https://satisfacao.onrender.com` (exemplo)
+
+## Passo 5: Testar
+- Clique no link gerado
+- Teste os botões
+- Aceda ao dashboard
+- Partilhe o link com professores!
+
+---
+
+## Notas:
+- Free tier: aplicação pode adormecer após 15min inativo
+- Primeiro acesso após inatividade: demora 30s a acordar
+- BD SQLite persiste no Render
+- Para BD PostgreSQL grátis: adicione "PostgreSQL" no Render
+
+## Problemas?
+- Verifique logs no Render Dashboard
+- Confirme que todos os ficheiros foram enviados
+- PORT já está configurado no app.py
+
+PRONTO! Link público funcionando 24/7! 🎉
