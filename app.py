@@ -374,6 +374,7 @@ def get_historico():
         conn = get_db()
         cursor = conn.cursor()
         
+        # Obter dados
         if DB_TYPE == 'sqlite':
             cursor.execute('''
                 SELECT tipo, avaliacao_date, avaliacao_time, sequential_number
@@ -381,12 +382,19 @@ def get_historico():
                 ORDER BY avaliacao_date DESC, avaliacao_time DESC
                 LIMIT ? OFFSET ?
             ''', (per_page, offset))
-            rows = cursor.fetchall()
-            data = [dict(row) for row in rows]
+            avaliacoes = cursor.fetchall()
+            data = []
+            for row in avaliacoes:
+                data.append({
+                    'tipo': row['tipo'],
+                    'avaliacao_date': row['avaliacao_date'],
+                    'avaliacao_time': row['avaliacao_time'],
+                    'sequential_number': row['sequential_number']
+                })
             
-            cursor.execute('SELECT COUNT(*) as total FROM avaliacoes')
-            result = cursor.fetchone()
-            total = result['total'] if result and result['total'] else 0
+            cursor.execute('SELECT COUNT(*) as cnt FROM avaliacoes')
+            total_row = cursor.fetchone()
+            total = total_row['cnt'] if total_row else 0
         else:
             cursor.execute('''
                 SELECT tipo, avaliacao_date, avaliacao_time, sequential_number
@@ -394,17 +402,23 @@ def get_historico():
                 ORDER BY avaliacao_date DESC, avaliacao_time DESC
                 LIMIT %s OFFSET %s
             ''', (per_page, offset))
-            rows = cursor.fetchall()
-            data = [{'tipo': row[0], 'avaliacao_date': row[1], 'avaliacao_time': row[2], 'sequential_number': row[3]} for row in rows]
+            avaliacoes = cursor.fetchall()
+            data = []
+            for row in avaliacoes:
+                data.append({
+                    'tipo': row[0],
+                    'avaliacao_date': str(row[1]),
+                    'avaliacao_time': str(row[2]),
+                    'sequential_number': row[3]
+                })
             
             cursor.execute('SELECT COUNT(*) FROM avaliacoes')
-            result = cursor.fetchone()
-            total = result[0] if result and result[0] else 0
+            total_row = cursor.fetchone()
+            total = total_row[0] if total_row else 0
         
         conn.close()
         
-        # Calcular pages corretamente
-        pages = (total + per_page - 1) // per_page if total > 0 else 1
+        pages = max(1, (total + per_page - 1) // per_page)
         
         return jsonify({
             'historico': data,
@@ -416,7 +430,7 @@ def get_historico():
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Erro: {str(e)}'}), 500
+        return jsonify({'error': f'Erro ao carregar histórico: {str(e)}'}), 500
 
 @app.route('/api/admin/resumo-geral', methods=['GET'])
 @login_required
