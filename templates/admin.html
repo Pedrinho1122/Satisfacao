@@ -526,21 +526,45 @@
                 });
 
                 let html = '<table class="historico-table"><thead><tr>';
-                html += '<th>Data</th><th>😀 Muito Satisfeito</th><th>🙂 Satisfeito</th><th>😞 Insatisfeito</th><th>Total</th>';
+                html += '<th>Data</th><th>😀 Muito Satisfeito</th><th>🙂 Satisfeito</th><th>😞 Insatisfeito</th><th>Total</th><th>Comparação</th>';
                 html += '</tr></thead><tbody>';
 
                 const dates = Object.keys(byDate).sort().reverse();
-                dates.forEach(date => {
+                
+                for (let i = 0; i < dates.length; i++) {
+                    const date = dates[i];
                     const stats = byDate[date];
                     const total = (stats[1] || 0) + (stats[2] || 0) + (stats[3] || 0);
+                    
+                    // Comparar com dia anterior
+                    let comparison = '';
+                    if (i < dates.length - 1) {
+                        const prevDate = dates[i + 1];
+                        const prevStats = byDate[prevDate];
+                        const prevTotal = (prevStats[1] || 0) + (prevStats[2] || 0) + (prevStats[3] || 0);
+                        const diff = total - prevTotal;
+                        const diffPercent = prevTotal > 0 ? ((diff / prevTotal) * 100).toFixed(1) : 0;
+                        
+                        if (diff > 0) {
+                            comparison = `<span style="color: #28a745; font-weight: bold;">↑ +${diff} (+${diffPercent}%)</span>`;
+                        } else if (diff < 0) {
+                            comparison = `<span style="color: #dc3545; font-weight: bold;">↓ ${diff} (${diffPercent}%)</span>`;
+                        } else {
+                            comparison = `<span style="color: #999;">= Igual</span>`;
+                        }
+                    } else {
+                        comparison = '<span style="color: #999;">Primeiro dia</span>';
+                    }
+                    
                     html += `<tr>
                         <td><strong>${date}</strong></td>
                         <td style="text-align: center;">${stats[1] || 0}</td>
                         <td style="text-align: center;">${stats[2] || 0}</td>
                         <td style="text-align: center;">${stats[3] || 0}</td>
                         <td style="text-align: center; font-weight: bold;">${total}</td>
+                        <td style="text-align: center;">${comparison}</td>
                     </tr>`;
-                });
+                }
 
                 html += '</tbody></table>';
                 content.innerHTML = html;
